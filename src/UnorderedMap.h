@@ -67,22 +67,51 @@ class UnorderedMap {
         const UnorderedMap * _map;
         HashNode * _ptr;
 
-        explicit basic_iterator(UnorderedMap const * map, HashNode *ptr) noexcept { /* TODO */ }
+        explicit basic_iterator(UnorderedMap const * map, HashNode *ptr) noexcept { _map = map; _ptr = ptr; }
 
     public:
-        basic_iterator() { /* TODO */ };
+        basic_iterator() { _map = nullptr; _ptr = nullptr;};
 
         basic_iterator(const basic_iterator &) = default;
         basic_iterator(basic_iterator &&) = default;
         ~basic_iterator() = default;
         basic_iterator &operator=(const basic_iterator &) = default;
         basic_iterator &operator=(basic_iterator &&) = default;
-        reference operator*() const { /* TODO */ }
-        pointer operator->() const { /* TODO */ }
-        basic_iterator &operator++() { /* TODO */ }
-        basic_iterator operator++(int) { /* TODO */ }
-        bool operator==(const basic_iterator &other) const noexcept { /* TODO */ }
-        bool operator!=(const basic_iterator &other) const noexcept { /* TODO */ }
+        reference operator*() const { return _ptr->val; }
+        pointer operator->() const { return &(_ptr->val); }
+        basic_iterator &operator++() { 
+            if(_ptr == nullptr)
+            {
+                return *this;
+            }
+
+            if(_ptr->next != nullptr)
+            {
+                _ptr = _ptr->next;
+                return *this;
+            }
+
+            size_type currentBucket = _map->_hash(_ptr->val.first);
+            for(size_type currentIndex = currentBucket+1; currentIndex < _map->_bucket_count; currentIndex++)
+            {
+                HashNode* bucket = _map->_buckets[currentIndex];
+                if(bucket != nullptr)
+                {
+                    _ptr = bucket;
+                    return *this;
+                }
+            }
+
+            _ptr = nullptr;
+            return *this;
+        }
+        basic_iterator operator++(int) {
+            basic_iterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+        bool operator==(const basic_iterator &other) const noexcept { return this->_ptr == other._ptr; }
+        bool operator!=(const basic_iterator &other) const noexcept { return this->_ptr != other._ptr;  }
     };
 
     using iterator = basic_iterator<pointer, reference, value_type>;
@@ -102,23 +131,39 @@ class UnorderedMap {
 
             HashNode * _node;
 
-            explicit local_iterator( HashNode * node ) noexcept { /* TODO */ }
+            explicit local_iterator( HashNode * node ) noexcept { _node = node; }
 
         public:
-            local_iterator() { /* TODO */ }
+            local_iterator() { _node = nullptr; }
 
             local_iterator(const local_iterator &) = default;
             local_iterator(local_iterator &&) = default;
             ~local_iterator() = default;
             local_iterator &operator=(const local_iterator &) = default;
             local_iterator &operator=(local_iterator &&) = default;
-            reference operator*() const { /* TODO */ }
-            pointer operator->() const { /* TODO */ }
-            local_iterator & operator++() { /* TODO */ }
-            local_iterator operator++(int) { /* TODO */ }
+            reference operator*() const { return _node->val; }
+            pointer operator->() const { return &(_node->val);}
+            local_iterator & operator++() { 
+                if(_node == nullptr)
+                {
+                    return *this;
+                }
+                else if(_node->next == nullptr)
+                {
+                    _node = nullptr;
+                    return *this;
+                }
+                _node = _node->next;
+                return *this;
+            }
+            local_iterator operator++(int) { 
+                local_iterator temp = *this;
+                ++(*this);
+                return temp;
+            }
 
-            bool operator==(const local_iterator &other) const noexcept { /* TODO */ }
-            bool operator!=(const local_iterator &other) const noexcept { /* TODO */ }
+            bool operator==(const local_iterator &other) const noexcept { return this->_node == other._node; }
+            bool operator!=(const local_iterator &other) const noexcept { return this->_node != other._node; }
     };
 
 private:
@@ -140,9 +185,9 @@ public:
                 const key_equal & equal = key_equal { }) 
                 { 
                     _bucket_count = next_greater_prime(bucket_count);
-                    _buckets = new HashNode*[_bucket_count];
+                    _buckets = new HashNode*[_bucket_count]();
                     _size = 0;
-                    _head = nullptr;
+                    _head = _buckets[0];
                 }
 
     ~UnorderedMap() { /* TODO */ }
@@ -163,8 +208,14 @@ public:
 
     size_type bucket_count() const noexcept { return _bucket_count; }
 
-    iterator begin() { /* TODO */ }
-    iterator end() { /* TODO */ }
+    iterator begin() { }
+    iterator end() { 
+        /*if(_size == 0)
+        {
+            return iterator(_head);
+        }
+        return iterator(_head->next);*/
+     }
 
     const_iterator cbegin() const { /* TODO */ };
     const_iterator cend() const { /* TODO */ };

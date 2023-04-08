@@ -222,16 +222,20 @@ private:
     void _move_content(UnorderedMap & src, UnorderedMap & dst) {
         
         // Transfer everything to dst
-        dst._buckets = src._buckets;
+        
         dst._bucket_count = src._bucket_count;
+        dst._buckets = new HashNode*[src._bucket_count];
+        dst._buckets = src._buckets;
         dst._head = src._head;
+        dst._size = src._size;
         dst._hash = std::move(src._hash);
         dst._equal = std::move(src._equal);
 
         // Clear src data
-        src._buckets = nullptr;
         src._bucket_count = 0;
+        src._buckets = nullptr;
         src._head = nullptr;
+        src._size = 0;
     }
 
 public:
@@ -303,7 +307,7 @@ public:
         return count;
     }
 
-    float load_factor() const { /* TODO */ }
+    float load_factor() const { return ((float)_size)/_bucket_count; }
 
     size_type bucket(const Key & key) const { return _bucket(key); }
 
@@ -337,7 +341,6 @@ public:
                 _buckets[_bucket(value)] = nodeToInsert;
                 _size++;
             }
-
             // Set _head as needed
             if(_head == nullptr)
             {

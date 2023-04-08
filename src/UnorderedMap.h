@@ -174,18 +174,18 @@ private:
 
     HashNode*& _find(size_type code, size_type bucket, const Key & key) { 
         
-        HashNode* currentNode = _buckets[bucket];
+        HashNode** currentNode = &(_buckets[bucket]);
 
-        while(currentNode != nullptr) // Loop through bucket list
+        while(*currentNode != nullptr) // Loop through bucket list
         {
-            if(_equal(currentNode->val.first, key)) // Return node if found
+            if(_equal((*currentNode)->val.first, key)) // Return node if found
             {
-                return currentNode;
+                return *currentNode;
             }
-            currentNode = currentNode->next;
+            currentNode = &((*currentNode)->next);
         }
 
-        return nullptr; // Return nullptr if not found
+        return *currentNode; // Return nullptr if not found
     }
 
     HashNode*& _find(const Key & key) { return _find(_hash(key), _bucket(key), key); }
@@ -289,46 +289,40 @@ public:
     }
 
     std::pair<iterator, bool> insert(const value_type & value) { 
-        /*size_type code = _hash(value.first);
-        size_type bucketIndex = _range_hash(code, _bucket_count);
-        HashNode* currentNode = _buckets[bucketIndex];
 
-        HashNode* nodeToInsert = new HashNode(value);
+        HashNode* possibleDup = _find(value.first); // Look to see if key already exists
+        
+        if(possibleDup == nullptr) // If key doesnt exist, proceed with insert
+        {
+            HashNode* bucketHead = _buckets[_bucket(value)]; // Get bucket head
+            HashNode* nodeToInsert = new HashNode(value); // Make new hash node
 
-        if(currentNode == nullptr)
-        {
-            nodeToInsert->next = nullptr;
-            _buckets[bucketIndex] = nodeToInsert;
-            _size++;
-        }
-        else
-        {
-            while(currentNode != nullptr)
+            if(bucketHead == nullptr) // Case for when bucket is empty
             {
-                if(_equal(currentNode->val.first, value.first))
-                {
-                    return std::make_pair(iterator(this, currentNode), false);
-                }
-                currentNode = currentNode->next;
+                nodeToInsert->next = nullptr;
+                _buckets[_bucket(value)] = nodeToInsert;
+                _size++;
+            }
+            else // Case for when bucket is not empty
+            {
+                nodeToInsert->next = bucketHead;
+                _buckets[_bucket(value)] = nodeToInsert;
+                _size++;
             }
 
-            currentNode = _buckets[bucketIndex];
-            nodeToInsert->next = currentNode;
-            _buckets[bucketIndex] = nodeToInsert;
-            _size++;
+            // Set _head as needed
+            if(_head == nullptr)
+            {
+                _head = nodeToInsert;
+            }
+            else if(_bucket(value) <= _bucket(_head->val))
+            {
+                _head = nodeToInsert;
+            }
+            return std::make_pair(iterator(this, nodeToInsert), true);
         }
-
-
-        if(_head == nullptr)
-        {
-            _head = nodeToInsert;
-        }
-        else if(bucketIndex <= _range_hash(_hash(_head->val.first), _bucket_count))
-        {
-            _head = nodeToInsert;
-        }
-
-        return std::make_pair(iterator(this, nodeToInsert), true);*/
+        
+        return std::make_pair(iterator(this, possibleDup), false);
 
     }
 

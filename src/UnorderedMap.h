@@ -246,9 +246,29 @@ public:
 
     ~UnorderedMap() { /* TODO */ }
 
-    UnorderedMap(const UnorderedMap & other) { /* TODO */ }
+    UnorderedMap(const UnorderedMap & other){ 
+        // Set initial values
+        _bucket_count = other._bucket_count;
+        _buckets = new HashNode*[_bucket_count]();
+        _head = nullptr;
+        _size = 0;
+        _hash = other._hash;
+        _equal = other._equal;
 
-    UnorderedMap(UnorderedMap && other) { std::cout << "Hre" << std::endl;_move_content(other, *this); }
+        // Copy all nodes over
+        for(size_type bucketIndex = 0; bucketIndex < other._bucket_count; bucketIndex++)
+        {
+            HashNode* currentNode = other._buckets[bucketIndex];
+            while(currentNode != nullptr)
+            {
+                insert(currentNode->val);
+                currentNode = currentNode->next;
+            }
+        }
+
+    }
+
+    UnorderedMap(UnorderedMap && other) { _move_content(other, *this); }
 
     UnorderedMap & operator=(const UnorderedMap & other) { /* TODO */ }
 
@@ -258,18 +278,12 @@ public:
 
     size_type size() const noexcept { return _size; }
 
-    bool empty() const noexcept { /* TODO */ }
+    bool empty() const noexcept { return _size == 0;  }
 
     size_type bucket_count() const noexcept { return _bucket_count; }
 
     iterator begin() { }
-    iterator end() { 
-        /*if(_size == 0)
-        {
-            return iterator(_head);
-        }
-        return iterator(_head->next);*/
-     }
+    iterator end() { }
 
     const_iterator cbegin() const { /* TODO */ };
     const_iterator cend() const { /* TODO */ };

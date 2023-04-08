@@ -191,7 +191,6 @@ private:
     HashNode*& _find(const Key & key) { return _find(_hash(key), _bucket(key), key); }
 
     HashNode * _insert_into_bucket(size_type bucket, value_type && value) {
-        
         HashNode* bucketHead = _buckets[bucket]; // Get bucket head
         HashNode* nodeToInsert = new HashNode(std::move(value)); // Create new hash node with value
 
@@ -213,11 +212,10 @@ private:
         {
             _head = nodeToInsert;
         }
-        else if(_range_hash(_hash(value.first), _bucket_count) <= _range_hash(_hash(_head->val.first), _bucket_count))
+        else if(_bucket(value) <= _bucket(_head->val))
         {
             _head = nodeToInsert;
         }
-
         return nodeToInsert; // Return node that was inserted
     }
 
@@ -276,20 +274,36 @@ public:
     const_iterator cbegin() const { /* TODO */ };
     const_iterator cend() const { /* TODO */ };
 
-    local_iterator begin(size_type n) { /* TODO */ }
-    local_iterator end(size_type n) { /* TODO */ }
+    local_iterator begin(size_type n) { return local_iterator(_buckets[n]);}
+    local_iterator end(size_type n) { return local_iterator(nullptr);}
 
-    size_type bucket_size(size_type n) { /* TODO */ }
+    size_type bucket_size(size_type n) { 
+        size_type count = 0;
+        HashNode* currentNode = _buckets[n];
+
+        while(currentNode != nullptr)
+        {
+            count++;
+            currentNode = currentNode->next;
+        }
+        return count;
+    }
 
     float load_factor() const { /* TODO */ }
 
     size_type bucket(const Key & key) const { return _bucket(key); }
 
     std::pair<iterator, bool> insert(value_type && value) {    
+        HashNode* possibleDup = _find(value.first); // Look to see if key already exists
+        
+        if(possibleDup == nullptr) // If key doesnt exist, proceed with insert
+        {
+            return std::make_pair(iterator(this, _insert_into_bucket(_bucket(value), std::move(value))), true);
+        }
+        return std::make_pair(iterator(this, possibleDup), false);
     }
 
     std::pair<iterator, bool> insert(const value_type & value) { 
-
         HashNode* possibleDup = _find(value.first); // Look to see if key already exists
         
         if(possibleDup == nullptr) // If key doesnt exist, proceed with insert

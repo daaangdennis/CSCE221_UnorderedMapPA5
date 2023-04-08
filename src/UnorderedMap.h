@@ -91,7 +91,7 @@ class UnorderedMap {
                 return *this;
             }
 
-            size_type currentBucket = _map->_hash(_ptr->val.first);
+            size_type currentBucket = _range_hash(_map->_hash(_ptr->val.first), _map->_bucket_count);
             for(size_type currentIndex = currentBucket+1; currentIndex < _map->_bucket_count; currentIndex++)
             {
                 HashNode* bucket = _map->_buckets[currentIndex];
@@ -168,17 +168,73 @@ class UnorderedMap {
 
 private:
 
-    size_type _bucket(size_t code) const { /* TODO */ }
-    size_type _bucket(const Key & key) const { /* TODO */ }
-    size_type _bucket(const value_type & val) const { /* TODO */ }
+    size_type _bucket(size_t code) const { return _range_hash(code, _bucket_count); }
+    size_type _bucket(const Key & key) const { return _range_hash(_hash(key), _bucket_count); }
+    size_type _bucket(const value_type & val) const { return _range_hash(_hash(val.first), _bucket_count); }
 
-    HashNode*& _find(size_type code, size_type bucket, const Key & key) { /* TODO */ }
+    HashNode*& _find(size_type code, size_type bucket, const Key & key) { 
+        
+        HashNode* currentNode = _buckets[bucket];
 
-    HashNode*& _find(const Key & key) { /* TODO */ }
+        while(currentNode != nullptr) // Loop through bucket list
+        {
+            if(_equal(currentNode->val.first, key)) // Return node if found
+            {
+                return currentNode;
+            }
+            currentNode = currentNode->next;
+        }
 
-    HashNode * _insert_into_bucket(size_type bucket, value_type && value) { /* TODO */ }
+        return nullptr; // Return nullptr if not found
+    }
 
-    void _move_content(UnorderedMap & src, UnorderedMap & dst) { /* TODO */ }
+    HashNode*& _find(const Key & key) { return _find(_hash(key), _bucket(key), key); }
+
+    HashNode * _insert_into_bucket(size_type bucket, value_type && value) {
+        
+        HashNode* bucketHead = _buckets[bucket]; // Get bucket head
+        HashNode* nodeToInsert = new HashNode(std::move(value)); // Create new hash node with value
+
+        if(bucketHead == nullptr) // If bucket is empty, add in new node
+        {
+            nodeToInsert->next = nullptr;
+            _buckets[bucket] = nodeToInsert;
+            _size++;
+        }
+        else // If bucket is not empty, set nodeToInsert->next to current bucket head and make new bucket head nodeToInsert
+        {
+            nodeToInsert->next = bucketHead;
+            _buckets[bucket] = nodeToInsert;
+            _size++;
+        }
+
+        // Assign the node being inserted to _head if there is no current head or if it is in an earlier bucket
+        if(_head == nullptr)
+        {
+            _head = nodeToInsert;
+        }
+        else if(_range_hash(_hash(value.first), _bucket_count) <= _range_hash(_hash(_head->val.first), _bucket_count))
+        {
+            _head = nodeToInsert;
+        }
+
+        return nodeToInsert; // Return node that was inserted
+    }
+
+    void _move_content(UnorderedMap & src, UnorderedMap & dst) {
+        
+        // Transfer everything to dst
+        dst._buckets = src._buckets;
+        dst._bucket_count = src._bucket_count;
+        dst._head = src._head;
+        dst._hash = std::move(src._hash);
+        dst._equal = std::move(src._equal);
+
+        // Clear src data
+        src._buckets = nullptr;
+        src._bucket_count = 0;
+        src._head = nullptr;
+    }
 
 public:
     explicit UnorderedMap(size_type bucket_count, const Hash & hash = Hash { },
@@ -187,15 +243,14 @@ public:
                     _bucket_count = next_greater_prime(bucket_count);
                     _buckets = new HashNode*[_bucket_count]();
                     _size = 0;
-                    _head = _buckets[0];
-                    _size = 0;
+                    _head = nullptr;
                 }
 
     ~UnorderedMap() { /* TODO */ }
 
     UnorderedMap(const UnorderedMap & other) { /* TODO */ }
 
-    UnorderedMap(UnorderedMap && other) { /* TODO */ }
+    UnorderedMap(UnorderedMap && other) { std::cout << "Hre" << std::endl;_move_content(other, *this); }
 
     UnorderedMap & operator=(const UnorderedMap & other) { /* TODO */ }
 
@@ -228,11 +283,54 @@ public:
 
     float load_factor() const { /* TODO */ }
 
-    size_type bucket(const Key & key) const { /* TODO */ }
+    size_type bucket(const Key & key) const { return _bucket(key); }
 
-    std::pair<iterator, bool> insert(value_type && value) { /* TODO */ }
+    std::pair<iterator, bool> insert(value_type && value) {    
+    }
 
-    std::pair<iterator, bool> insert(const value_type & value) { /* TODO */ }
+    std::pair<iterator, bool> insert(const value_type & value) { 
+        /*size_type code = _hash(value.first);
+        size_type bucketIndex = _range_hash(code, _bucket_count);
+        HashNode* currentNode = _buckets[bucketIndex];
+
+        HashNode* nodeToInsert = new HashNode(value);
+
+        if(currentNode == nullptr)
+        {
+            nodeToInsert->next = nullptr;
+            _buckets[bucketIndex] = nodeToInsert;
+            _size++;
+        }
+        else
+        {
+            while(currentNode != nullptr)
+            {
+                if(_equal(currentNode->val.first, value.first))
+                {
+                    return std::make_pair(iterator(this, currentNode), false);
+                }
+                currentNode = currentNode->next;
+            }
+
+            currentNode = _buckets[bucketIndex];
+            nodeToInsert->next = currentNode;
+            _buckets[bucketIndex] = nodeToInsert;
+            _size++;
+        }
+
+
+        if(_head == nullptr)
+        {
+            _head = nodeToInsert;
+        }
+        else if(bucketIndex <= _range_hash(_hash(_head->val.first), _bucket_count))
+        {
+            _head = nodeToInsert;
+        }
+
+        return std::make_pair(iterator(this, nodeToInsert), true);*/
+
+    }
 
     iterator find(const Key & key) { /* TODO */ }
 

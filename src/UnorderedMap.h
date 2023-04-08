@@ -188,6 +188,7 @@ public:
                     _buckets = new HashNode*[_bucket_count]();
                     _size = 0;
                     _head = _buckets[0];
+                    _size = 0;
                 }
 
     ~UnorderedMap() { /* TODO */ }

@@ -447,6 +447,11 @@ public:
     }
 
     iterator erase(iterator pos) { 
+        if(pos == end())
+        {
+            return end();
+        }
+
         HashNode* nodeToErase = pos._ptr;
         size_type bucketIndex = _bucket(pos._ptr->val);
         HashNode* currentNode = _buckets[bucketIndex];
@@ -458,7 +463,7 @@ public:
             _buckets[bucketIndex] = nodeToErase->next;
             if(nodeToErase == _head)
             {
-                _head = _buckets[bucketIndex];
+                _head = it._ptr;
             }
             delete nodeToErase;
             _size--;
@@ -478,7 +483,8 @@ public:
             }
             currentNode = currentNode->next;
         }
-        return iterator(this, nullptr);
+
+        return end();
 
     }
 
@@ -489,10 +495,12 @@ public:
 
         if(_equal(key, currentNode->val.first))
         {
+            auto it = iterator(this, currentNode);
+            it++;
             _buckets[bucketIndex] = currentNode->next;
             if(_head == currentNode)
             {
-                _head = _buckets[bucketIndex];
+                _head = it._ptr;
             }
             delete currentNode;
             _size--;

@@ -103,14 +103,7 @@ class UnorderedMap {
                 }
             }
 
-            if(_map->_size > 0)
-            {
-                _ptr = _map->_head;
-            }
-            else
-            {
-                _ptr = nullptr;
-            }
+            _ptr = nullptr;
             return *this;
         }
         basic_iterator operator++(int) {

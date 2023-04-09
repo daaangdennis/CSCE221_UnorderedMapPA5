@@ -92,6 +92,7 @@ class UnorderedMap {
             }
 
             size_type currentBucket = _range_hash(_map->_hash(_ptr->val.first), _map->_bucket_count);
+
             for(size_type currentIndex = currentBucket+1; currentIndex < _map->_bucket_count; currentIndex++)
             {
                 HashNode* bucket = _map->_buckets[currentIndex];
@@ -102,7 +103,14 @@ class UnorderedMap {
                 }
             }
 
-            _ptr = nullptr;
+            if(_map->_size > 0)
+            {
+                _ptr = _map->_head;
+            }
+            else
+            {
+                _ptr = nullptr;
+            }
             return *this;
         }
         basic_iterator operator++(int) {
@@ -441,7 +449,6 @@ public:
     iterator erase(iterator pos) { 
         HashNode* nodeToErase = pos._ptr;
         size_type bucketIndex = _bucket(pos._ptr->val);
-
         HashNode* currentNode = _buckets[bucketIndex];
 
         if(nodeToErase == currentNode)
@@ -458,7 +465,7 @@ public:
             return it;
         }
 
-        while(currentNode->next != nullptr)
+        while(currentNode != nullptr)
         {
             if(currentNode->next == nodeToErase)
             {
@@ -471,7 +478,7 @@ public:
             }
             currentNode = currentNode->next;
         }
-        return end();
+        return iterator(this, nullptr);
 
     }
 

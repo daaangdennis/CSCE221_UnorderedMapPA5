@@ -249,7 +249,13 @@ public:
                     _head = nullptr;
                 }
 
-    ~UnorderedMap() { /* TODO */ }
+    ~UnorderedMap() { 
+        clear();
+        delete _buckets;
+        _bucket_count = 0;
+        _size = 0;
+        _head = nullptr;
+    }
 
     UnorderedMap(const UnorderedMap & other){ 
         // Set initial values
@@ -275,11 +281,51 @@ public:
 
     UnorderedMap(UnorderedMap && other) { _move_content(other, *this); }
 
-    UnorderedMap & operator=(const UnorderedMap & other) { /* TODO */ }
+    UnorderedMap & operator=(const UnorderedMap & other) { 
+        if(this != &other)
+        {
+            this->~UnorderedMap();
+            // Set initial values
+            _bucket_count = other._bucket_count;
+            _buckets = new HashNode*[_bucket_count]();
+            _head = nullptr;
+            _size = 0;
+            _hash = other._hash;
+            _equal = other._equal;
+
+            // Copy all nodes over
+            for(size_type bucketIndex = 0; bucketIndex < other._bucket_count; bucketIndex++)
+            {
+                HashNode* currentNode = other._buckets[bucketIndex];
+                while(currentNode != nullptr)
+                {
+                    insert(currentNode->val);
+                    currentNode = currentNode->next;
+                }
+            }
+        }
+        return *this;
+        
+    }
 
     UnorderedMap & operator=(UnorderedMap && other) { /* TODO */ }
 
-    void clear() noexcept { /* TODO */ }
+    void clear() noexcept { 
+        for(size_type index = 0; index < _bucket_count; index++)
+        {
+            HashNode* currentNode = _buckets[index];
+            if(currentNode != nullptr)
+            {
+                while(currentNode != nullptr)
+                {
+                    HashNode* nodeToDelete = currentNode;
+                    currentNode = currentNode->next;
+                    delete nodeToDelete;
+                    _size--;
+                }
+            }
+        }
+    }
 
     size_type size() const noexcept { return _size; }
 

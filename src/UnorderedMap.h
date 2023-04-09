@@ -80,30 +80,27 @@ class UnorderedMap {
         reference operator*() const { return _ptr->val; }
         pointer operator->() const { return &(_ptr->val); }
         basic_iterator &operator++() { 
-            if(_ptr == nullptr)
-            {
-                return *this;
-            }
 
+            // If the current pointer is not at the end of the bucket list, just move it to next node
             if(_ptr->next != nullptr)
             {
                 _ptr = _ptr->next;
                 return *this;
             }
 
-            size_type currentBucket = _range_hash(_map->_hash(_ptr->val.first), _map->_bucket_count);
-
+            // If current pointer is at the end of the bucket list, find next non-empty bucket
+            size_type currentBucket = _range_hash(_map->_hash(_ptr->val.first), _map->_bucket_count); // Get index of current bucket
             for(size_type currentIndex = currentBucket+1; currentIndex < _map->_bucket_count; currentIndex++)
             {
                 HashNode* bucket = _map->_buckets[currentIndex];
-                if(bucket != nullptr)
+                if(bucket != nullptr) // If non-empty bucket found, set pointer to the head of that bucket list and return
                 {
                     _ptr = bucket;
                     return *this;
                 }
             }
 
-            _ptr = nullptr;
+            _ptr = nullptr; // If for loop ends, then there is no next element, so set _ptr to nullptr
             return *this;
         }
         basic_iterator operator++(int) {
@@ -145,16 +142,12 @@ class UnorderedMap {
             reference operator*() const { return _node->val; }
             pointer operator->() const { return &(_node->val);}
             local_iterator & operator++() { 
-                if(_node == nullptr)
-                {
-                    return *this;
-                }
-                else if(_node->next == nullptr)
+                if(_node->next == nullptr) // If end of list is reached, set _node to nullptr
                 {
                     _node = nullptr;
                     return *this;
                 }
-                _node = _node->next;
+                _node = _node->next; // If not at end, set _node to next node
                 return *this;
             }
             local_iterator operator++(int) { 

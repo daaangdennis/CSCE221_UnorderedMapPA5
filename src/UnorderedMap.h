@@ -230,8 +230,7 @@ private:
         dst._equal = std::move(src._equal);
 
         // Clear src data
-        src._bucket_count = 0;
-        src._buckets = new HashNode*[dst._bucket_count];
+        src._buckets = new HashNode*[src._bucket_count]();
         src._head = nullptr;
         src._size = 0;
 
@@ -306,7 +305,14 @@ public:
         
     }
 
-    UnorderedMap & operator=(UnorderedMap && other) { /* TODO */ }
+    UnorderedMap & operator=(UnorderedMap && other) { 
+        if(this != &other)
+        {
+            this->~UnorderedMap();
+            _move_content(other, *this);
+        }
+        return *this;
+    }
 
     void clear() noexcept {
         if(_size > 0)

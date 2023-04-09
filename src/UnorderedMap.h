@@ -222,9 +222,7 @@ private:
     void _move_content(UnorderedMap & src, UnorderedMap & dst) {
         
         // Transfer everything to dst
-        
         dst._bucket_count = src._bucket_count;
-        dst._buckets = new HashNode*[src._bucket_count];
         dst._buckets = src._buckets;
         dst._head = src._head;
         dst._size = src._size;
@@ -233,7 +231,7 @@ private:
 
         // Clear src data
         src._bucket_count = 0;
-        src._buckets = nullptr;
+        src._buckets = new HashNode*[dst._bucket_count];
         src._head = nullptr;
         src._size = 0;
 
@@ -251,10 +249,10 @@ public:
 
     ~UnorderedMap() { 
         clear();
-        delete _buckets;
+        delete[] _buckets;
+        _buckets = nullptr;
         _bucket_count = 0;
         _size = 0;
-        _head = nullptr;
     }
 
     UnorderedMap(const UnorderedMap & other){ 
@@ -284,7 +282,7 @@ public:
     UnorderedMap & operator=(const UnorderedMap & other) { 
         if(this != &other)
         {
-            this->~UnorderedMap();
+            this->~UnorderedMap(); // Call destructor
             // Set initial values
             _bucket_count = other._bucket_count;
             _buckets = new HashNode*[_bucket_count]();
@@ -310,21 +308,25 @@ public:
 
     UnorderedMap & operator=(UnorderedMap && other) { /* TODO */ }
 
-    void clear() noexcept { 
-        for(size_type index = 0; index < _bucket_count; index++)
+    void clear() noexcept {
+        if(_size > 0)
         {
-            HashNode* currentNode = _buckets[index];
-            if(currentNode != nullptr)
+            for(size_type index = 0; index < _bucket_count; index++)
             {
-                while(currentNode != nullptr)
+                HashNode* currentNode = _buckets[index];
+                if(currentNode != nullptr)
                 {
-                    HashNode* nodeToDelete = currentNode;
-                    currentNode = currentNode->next;
-                    delete nodeToDelete;
-                    _size--;
+                    while(currentNode != nullptr)
+                    {
+                        HashNode* nodeToDelete = currentNode;
+                        currentNode = currentNode->next;
+                        delete nodeToDelete;
+                        _size--;
+                    }
                 }
             }
         }
+        
     }
 
     size_type size() const noexcept { return _size; }
@@ -438,6 +440,8 @@ public:
 
         if(nodeToErase == currentNode)
         {
+            auto it = iterator(this, nodeToErase);
+            it++;
             _buckets[bucketIndex] = nodeToErase->next;
             if(nodeToErase == _head)
             {
@@ -445,17 +449,19 @@ public:
             }
             delete nodeToErase;
             _size--;
-            return iterator(this, _buckets[bucketIndex]);
+            return it;
         }
 
         while(currentNode->next != nullptr)
         {
             if(currentNode->next == nodeToErase)
             {
+                auto it = iterator(this, nodeToErase);
+                it++;
                 currentNode->next = nodeToErase->next;
                 delete nodeToErase;
                 _size--;
-                return iterator(this, currentNode->next);
+                return it;
             }
             currentNode = currentNode->next;
         }
@@ -471,6 +477,10 @@ public:
         if(_equal(key, currentNode->val.first))
         {
             _buckets[bucketIndex] = currentNode->next;
+            if(_head == currentNode)
+            {
+                _head = _buckets[bucketIndex];
+            }
             delete currentNode;
             _size--;
             return 1;

@@ -358,13 +358,92 @@ public:
 
     }
 
-    iterator find(const Key & key) { /* TODO */ }
+    iterator find(const Key & key) { return iterator(this, _find(key)); }
 
-    T& operator[](const Key & key) { /* TODO */ }
+    T& operator[](const Key & key) {
+        HashNode* nodeFound = _find(key);
+        if(nodeFound == nullptr)
+        {
+            HashNode* nodeToInsert = new HashNode(std::make_pair(key, T{}), nullptr);
+            size_type bucketIndex = _bucket(key);
+            nodeToInsert->next = _buckets[bucketIndex];
+            _buckets[bucketIndex] = nodeToInsert;
+            _size++;
 
-    iterator erase(iterator pos) { /* TODO */ }
+            if(_head == nullptr)
+            {
+                _head = nodeToInsert;
+            }
+            else if(_bucket(nodeToInsert->val) <= _bucket(_head->val))
+            {
+                _head = nodeToInsert;
+            }
+            
+            return nodeToInsert->val.second;
+        }
+        return nodeFound->val.second;
+    }
 
-    size_type erase(const Key & key) { /* TODO */ }
+    iterator erase(iterator pos) { 
+        HashNode* nodeToErase = pos._ptr;
+        size_type bucketIndex = _bucket(pos._ptr->val);
+
+        HashNode* currentNode = _buckets[bucketIndex];
+
+        if(nodeToErase == currentNode)
+        {
+            _buckets[bucketIndex] = nodeToErase->next;
+            if(nodeToErase == _head)
+            {
+                _head = _buckets[bucketIndex];
+            }
+            delete nodeToErase;
+            _size--;
+            return iterator(this, _buckets[bucketIndex]);
+        }
+
+        while(currentNode->next != nullptr)
+        {
+            if(currentNode->next == nodeToErase)
+            {
+                currentNode->next = nodeToErase->next;
+                delete nodeToErase;
+                _size--;
+                return iterator(this, currentNode->next);
+            }
+            currentNode = currentNode->next;
+        }
+        return end();
+
+    }
+
+    size_type erase(const Key & key) { 
+
+        size_type bucketIndex = _bucket(key);
+        HashNode* currentNode = _buckets[bucketIndex];
+
+        if(_equal(key, currentNode->val.first))
+        {
+            _buckets[bucketIndex] = currentNode->next;
+            delete currentNode;
+            _size--;
+            return 1;
+        }
+
+        while(currentNode->next != nullptr)
+        {
+            if(_equal(key, currentNode->next->val.first))
+            {
+                HashNode* nodeToErase = currentNode->next;
+                currentNode->next = nodeToErase->next;
+                delete nodeToErase;
+                _size--;
+                return 1;
+            }
+            currentNode = currentNode->next;
+        }
+        return 0;
+    }
 
     template<typename KK, typename VV>
     friend void print_map(const UnorderedMap<KK, VV> & map, std::ostream & os);

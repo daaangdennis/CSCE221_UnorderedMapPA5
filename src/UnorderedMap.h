@@ -479,12 +479,13 @@ public:
         size_type bucketIndex = _bucket(key);
         HashNode* currentNode = _buckets[bucketIndex];
 
+        // Case for when node being deleted is head of bucket list
         if(_equal(key, currentNode->val.first))
         {
             auto it = iterator(this, currentNode);
             it++;
             _buckets[bucketIndex] = currentNode->next;
-            if(_head == currentNode)
+            if(_head == currentNode) // Set _head to next element in map if needed
             {
                 _head = it._ptr;
             }
@@ -493,6 +494,7 @@ public:
             return 1;
         }
 
+        // Standard case
         while(currentNode->next != nullptr)
         {
             if(_equal(key, currentNode->next->val.first))

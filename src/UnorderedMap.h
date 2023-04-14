@@ -338,8 +338,8 @@ public:
     iterator begin() { return iterator(this, _head); }
     iterator end() { return iterator(this, nullptr); }
 
-    const_iterator cbegin() const { return const_iterator(_head); };
-    const_iterator cend() const { return const_iterator(nullptr); };
+    const_iterator cbegin() const { return const_iterator(this, _head); };
+    const_iterator cend() const { return const_iterator(this, nullptr); };
 
     local_iterator begin(size_type n) { return local_iterator(_buckets[n]);}
     local_iterator end(size_type n) { return local_iterator(nullptr);}
